@@ -42,7 +42,8 @@ def ListOfPopulations(dataset):
     listofpopulations = dataset["level5"].unique()
     return listofpopulations
 
-print(ListOfPopulations(ds))
+for i in ListOfPopulations(ds):
+    print(i, end=", ")
 
 # Comprobar si el dataset contiene Na´s
 
@@ -76,10 +77,12 @@ print(MeanPricePopulation(cleandataset, "Arroyomolinos (Madrid)"))
 import matplotlib.pyplot as plt
 
 def HistogramPopulation(dataset, city):
-    plt.hist(x=dataset[dataset['level5'] == city]["price"], ec = "black", label="Precio")
-    plt.title(f"Precios de {city}")
-    plt.legend()
-    plt.show()
+    plt.hist(dataset[dataset['level5'] == city]["price"], ec = "black", label= city)
+
+HistogramPopulation(cleandataset, "Arroyomolinos (Madrid)")
+plt.title("Arroyomolinos (Madrid)")
+plt.legend()
+plt.show()
 
 print(HistogramPopulation(cleandataset, "Arroyomolinos (Madrid)"))
 
@@ -121,3 +124,60 @@ def NumberOfRealEstates(dataset):
     return len(dataset["realEstate_name"].unique())
 
 print(NumberOfRealEstates(dscleanwithpps))
+
+# Población con más cantidad de casas.
+
+def MoreHousesPopulation(dataset):
+    return dataset.value_counts("level5").head(1)
+   
+
+print(MoreHousesPopulation(dscleanwithpps))
+
+# Creamos dataset del cinturon sur
+
+def CinturonSur(dataset):
+    cinturonsur = dataset[dataset["level5"].isin(["Fuenlabrada", "Leganés", "Getafe", "Alcorcón"])].reset_index()
+    cinturonsur.drop('index', axis = 1)
+    return cinturonsur.drop('index', axis = 1)
+
+cinturonsur = CinturonSur(dscleanwithpps)
+
+print(cinturonsur)
+
+# Grafica de barras con la MEDIANA de los precios de las ciudades.
+
+def MedianPricePopulation(dataset, city):
+    return dataset[dataset['level5'] == city]["price"].median()
+
+plt.bar(["Fuenlabrada", "Leganés", "Alcorcón", "Getafe"], [(MedianPricePopulation(cinturonsur, "Fuenlabrada")), (MedianPricePopulation(cinturonsur, "Leganés")), (MedianPricePopulation(cinturonsur, "Getafe")), (MedianPricePopulation(cinturonsur, "Alcorcón"))], ec="black")
+plt.title("Mediana de precios en Cinturon Sur")
+plt.show()
+
+# Calcula Media y varianza para precio, habitaciones, superficies y baños
+
+def VarianceValuesCity (dataset, value):
+    return dataset[value].var()
+
+def MeanValuesCity(dataset, value):
+    return dataset[value].mean()
+
+print(f"La varianza en los precios es: {VarianceValuesCity(cinturonsur, 'price')}")
+print(f"La media de los precios es : {MeanValuesCity(cinturonsur, 'price')}")
+print(f"La varianza en las habitaciones es: {VarianceValuesCity(cinturonsur, 'rooms')}")
+print(f"La media de las habitaciones es : {MeanValuesCity(cinturonsur, 'rooms')}")
+print(f"La varianza en los metros es: {VarianceValuesCity(cinturonsur, 'surface')}")
+print(f"La media de los metros es : {MeanValuesCity(cinturonsur, 'surface')}")
+print(f"La varianza en los baños es: {VarianceValuesCity(cinturonsur, 'bathrooms')}")
+print(f"La media de los baños es : {MeanValuesCity(cinturonsur, 'bathrooms')}")
+
+# Casa más cara de cada población
+
+def MoreExpensiveHouseInPopulation(dataset, city):
+    moreexpensivehouseinpopulation = dataset[dataset['level5'] == city].sort_values("price", ascending = False).head(1).squeeze()
+    return f"La dirección de la casa más cara es {moreexpensivehouseinpopulation['address']} y su precio es de {moreexpensivehouseinpopulation['price']} €."
+
+print(MoreExpensiveHouseInPopulation(cinturonsur, "Fuenlabrada"))
+print(MoreExpensiveHouseInPopulation(cinturonsur, "Getafe"))
+print(MoreExpensiveHouseInPopulation(cinturonsur, "Alcorcón"))
+print(MoreExpensiveHouseInPopulation(cinturonsur, "Leganés"))
+

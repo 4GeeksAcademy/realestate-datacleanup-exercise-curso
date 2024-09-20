@@ -10,13 +10,13 @@ def MoreExpensiveHouse(dataset):
     moreexpensivehouse = dataset.sort_values("price", ascending = False).head(1).squeeze()
     return f"La casa en {moreexpensivehouse['address']}, es la más cara y su precio es de {moreexpensivehouse['price']} €."
 
-MoreExpensiveHouse(ds)
+print(MoreExpensiveHouse(ds))
 
 # Casa más barate del dataset
 
 def LessExpensiveHouse(dataset):
     lessexpensivehouse = dataset.sort_values("price", na_position = "first").head(1).squeeze()
-    return f"La casa con dirección en {lessexpensivehouse['address']}, es la más cara y su precio es de {lessexpensivehouse['price']}"
+    return f"La casa con dirección en {lessexpensivehouse['address']}, es la más cara y su precio es de {lessexpensivehouse['price']} €."
 
 print (LessExpensiveHouse(ds))
 
@@ -110,8 +110,8 @@ print(f"La conclusión sobre la igualdad de la media de precio por metro cuadrad
 
 # Analiza la relacion entre la superficie y el precio de las casas.
 
-def RelationPriceSurface(dataset, city):
-    return plt.scatter(x = dataset[dataset['level5'] == city]["price"], y = dataset[dataset['level5'] == city]["surface"], label = city, ec="black")
+def RelationPriceSurface(dataset, city, color="blue"):
+    return plt.scatter(x = dataset[dataset['level5'] == city]["price"], y = dataset[dataset['level5'] == city]["surface"], label = city, ec="black", color=color)
 
 RelationPriceSurface(dscleanwithpps, "Valdemorillo")
 RelationPriceSurface(dscleanwithpps, "Galapagar")
@@ -181,3 +181,76 @@ print(MoreExpensiveHouseInPopulation(cinturonsur, "Getafe"))
 print(MoreExpensiveHouseInPopulation(cinturonsur, "Alcorcón"))
 print(MoreExpensiveHouseInPopulation(cinturonsur, "Leganés"))
 
+# Normalizar precios para cada población
+
+from sklearn.preprocessing import MinMaxScaler
+
+scaler = MinMaxScaler()
+
+def NormalizedPrice(dataset):
+    normalizeddataset = scaler.fit_transform(dataset[["price"]])
+    return normalizeddataset
+
+cinturonsur["precio_normalizado"] = NormalizedPrice(cinturonsur)   
+
+#Crear Histograma en el mismo grafico.
+
+plt.hist(cinturonsur[cinturonsur['level5'] == "Fuenlabrada"]["precio_normalizado"], ec="Black", alpha=1, bins=30, label="Fuenlabrada")
+plt.hist(cinturonsur[cinturonsur['level5'] == "Getafe"]["precio_normalizado"], ec="black", alpha=0.6, bins=30, label="Getafe")
+plt.hist(cinturonsur[cinturonsur['level5'] == "Leganés"]["precio_normalizado"], ec="black", alpha=0.5, bins=30, label="Leganés")
+plt.hist(cinturonsur[cinturonsur['level5'] == "Alcorcón"]["precio_normalizado"], ec="black", alpha=0.4, bins=30, label="Alcorcón")
+plt.title("Histogramas Precios Normalizados del Cinturón Sur")
+plt.legend()
+plt.show()
+
+###Precio medio/m2 Getafe y Alcorcón###
+plt.figure(figsize=(10,5))
+plt.title("Comparación precios por metro cuadrado entre\nGetafe y Alcorcón")
+plt.subplot(1,2,1)
+plt.hist(cinturonsur[cinturonsur['level5'] == "Getafe"]['pps'], ec="black")
+plt.xlabel("Getafe")
+plt.subplot(1,2,2)
+plt.hist(cinturonsur[cinturonsur['level5'] == "Alcorcón"]['pps'], ec="black")
+plt.xlabel("Alcorcón")
+plt.show()
+
+# Grafico de dispersión de las cuatro poblaciones del cinturon sur.
+
+plt.figure(figsize=(10,10))
+plt.title("Gráfico de dispersión precio/metro cuadrado")
+plt.subplot(2,2,1)
+RelationPriceSurface(cinturonsur, "Fuenlabrada", color="red")
+plt.xlabel("Fuenlabrada")
+plt.subplot(2,2,2)
+RelationPriceSurface(cinturonsur, "Getafe", color="orange")
+plt.xlabel("Getafe")
+plt.subplot(2,2,3)
+RelationPriceSurface(cinturonsur, "Leganés", color="blue")
+plt.xlabel("Leganés")
+plt.subplot(2,2,4)
+RelationPriceSurface(cinturonsur, "Alcorcón", color="green")
+plt.xlabel("Alcorcón")
+plt.show()
+
+from ipyleaflet import Map, basemaps, Marker
+
+# Mapa centrado en (60 grados latitud y -2.2 grados longitud)
+# Latitud, longitud
+mapa = Map(center = (60, -2.2), zoom = 2, min_zoom = 1, max_zoom = 20, 
+    basemap=basemaps.OpenStreetMap.Mapnik)
+
+## Aquí: traza la coordenadas de los estados
+def GetCoordinatesDict(dataset):
+    return dataset[['latitude','longitude']].to_dict()
+
+cs_coord = GetCoordinatesDict(cinturonsur)
+
+
+## PON TU CÓDIGO AQUÍ:
+def AddMarker(dataset):
+    for i in range(len(dataset['latitude'])):
+        marker = Marker(location=(dataset["latitude"][i],dataset["longitude"][i]))
+        mapa.add(marker)
+
+print(AddMarker(cs_coord))
+display (mapa)
